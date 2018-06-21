@@ -1,5 +1,5 @@
-# WSClock Page Replacement Algorithm
-WSClock Page Replacement Algorithm implementation built in C for "Operating Systems" course of 2018 at the Institute of Science and Technology at Federal University of São Paulo (UNIFESP). 🐚
+# WSClock Page Replacement algorithm
+WSClock Page Replacement algorithm implementation built in C for "Operating Systems" course of 2018 at the Institute of Science and Technology at Federal University of São Paulo (UNIFESP). 📄
 
 The description for this task can be found (in Portuguese) [here](LAB-04-gerenciamento-memoria.pdf).
 
