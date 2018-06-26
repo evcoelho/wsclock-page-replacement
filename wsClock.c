@@ -81,9 +81,9 @@ int TLista_Retira(TLista *lista, TApontador *p, TItem *x){
 void printaLista(TLista *lista){
 	TCelula *aux = lista->frente->proximo;
 	while(aux!=lista->frente){
-		printf("%d\t", aux->item.id_page);
-        printf("%d\t", aux->item.hit);
-        printf("%f\n", aux->item.time);
+		printf("id_page: %d\t", aux->item.id_page);
+        printf("page_hit: %d\t", aux->item.hit);
+        printf("time_acess: %f\n", aux->item.time);
 		aux=aux->proximo;
 	}
 }
@@ -92,18 +92,21 @@ int main(){
     TLista lista;
     TLista_Inicia(&lista);
     
-    TItem aux;
-    TApontador *posicao;
-    posicao=lista.frente->proximo;
+    TItem aux;  //a insercao na lista eh atraves de um TItem
+    TApontador *posicao;  //e a posicao de insercao é passada como referencia
+    posicao=lista.frente->proximo;  //sempre insere na primeira posicao, dps da cabeca
+    
     int i;
     for(i=1;i<=3;i++){
         aux.id_page=i*1000;
         aux.hit=i*10;
         aux.time=i*25.5;
         TLista_Insere(&lista, posicao, aux);
+        printaLista(&lista);
+        printf("\n");
     }
     
-	printaLista(&lista);
+	//printaLista(&lista);
 	
     return 0;
 }
