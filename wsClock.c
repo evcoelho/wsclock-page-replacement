@@ -6,28 +6,33 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct Celula Apontador;
+#define MAX 1023
 
-typedef struct Celula{
+typedef struct Item{
     int id_page;
     int hit;
-    int time;
-    Apontador * proximo;
+    float time;
+}TItem;
+
+typedef struct Celula TApontador;
+
+typedef struct Celula{
+    TItem item;
+    TApontador *proximo;
+    TApontador *anterior;
 }TCelula;
 
 typedef struct Lista{
     int tamanho;
-    Apontador *primeiro;
-    Apontador *ultimo;
-    Apontador *posicao;
+    TApontador *frente;
 }TLista;
 
-TLista *TLista_Inicia(){
-    TLista *pLista = (TLista*)malloc(sizeof(TLista));
-    pLista->primeiro=NULL;
-    pLista->ultimo=NULL;
-    pLista->tamanho=0;
-    return pLista;
+void TLista_Inicia(TLista *lista){
+    lista->tamanho=0;
+    TCelula *cabeca = (TCelula*) malloc(sizeof(TCelula));
+    lista->frente=cabeca;
+    cabeca->proximo=lista->frente;
+    cabeca->anterior=lista->frente;
 }
 
 int TLista_Tamanho(TLista *pLista){
@@ -41,104 +46,64 @@ int TLista_EhVazia(TLista *pLista){
         return 0;
 }
 
-void TLista_Insere(TLista *pLista, TCelula *x){
-    TCelula *novo = (TCelula*)malloc(sizeof(TCelula));
-	novo=x;
-    if(TLista_EhVazia(pLista)){ 
-        novo->proximo=NULL;
-        pLista->primeiro=novo;
-        pLista->ultimo=novo;
-        pLista->posicao=pLista->primeiro;
-        
-    }else{
-        novo->proximo=NULL;
-        pLista->ultimo->proximo=novo;
-        pLista->ultimo=novo;
+int TLista_Insere(TLista *lista, TApontador *p, TItem x){
+    if(TLista_Tamanho(lista)==MAX){
+        return 0;
     }
-    pLista->tamanho++;
+    else{
+        TCelula *novo = (TCelula*)malloc(sizeof(TCelula));
+    	novo->item=x;
+        novo->proximo=p;
+        novo->anterior=p->anterior;
+        p->anterior->proximo=novo;
+        p->anterior=novo;
+        lista->tamanho++;
+        return 1;
+    }
 }
 
-TCelula* TLista_Retira(TLista *pLista){
-    if(TLista_EhVazia(pLista)==1){
+int TLista_Retira(TLista *lista, TApontador *p, TItem *x){
+    if(TLista_EhVazia(lista)){
         printf("A lista nao possui elementos\n");
-        return NULL;
-    }if(pLista->primeiro==pLista->ultimo){
-        TCelula *aux;
-        aux=pLista->primeiro;
-        TCelula *x;
-        x=aux;
-        free(aux);
-        free(pLista);
-        return x;
+        return 0;
     }
-    if(pLista->posicao->proximo==NULL){            //Quero tirar o ultimo da fila
-        TCelula *anterior;
-        anterior=pLista->primeiro;
-        while(anterior->proximo!=pLista->posicao){
-            anterior=anterior->proximo;
-        }
-        TCelula *aux;
-        TCelula *x;
-        aux=pLista->posicao;
-        anterior->proximo=NULL;
-        pLista->ultimo=anterior;
-        pLista->posicao=pLista->primeiro;
-        x=aux;
-        free(aux);
-        pLista->tamanho--;
-        return x;
-    
-    }if(pLista->posicao==pLista->primeiro){          //Quero tirar o primeiro da fila
-        TCelula  *aux;
-        aux=pLista->primeiro;
-        pLista->primeiro=aux->proximo;
-        TCelula *x;
-        x=aux;
-        free(aux);
-        pLista->posicao=pLista->primeiro;
-        pLista->tamanho--;
-        return x;
-    }
-    else
-    {
-        TCelula *anterior;
-        anterior=pLista->primeiro;
-        while(anterior->proximo!=pLista->posicao){
-            anterior=anterior->proximo;
-        }
-        TCelula *aux;
-        aux=anterior->proximo;
-        anterior->proximo=aux->proximo;
-        TCelula *x;
-        x=aux;
-        pLista->posicao=anterior->proximo;
-        free(aux);
-        pLista->tamanho--;
-        return x;
+    else{
+        p=p->anterior;
+        p->anterior->proximo=p->proximo;
+        p->proximo->anterior=p->anterior;
+        *x=p->item;
+        free(p);
+        lista->tamanho--;
+        return 1;
     }
 }
 
-void printaLista(TLista *pLista){
-	TCelula *aux = pLista->primeiro;
-	do{
-		printf("%d\n", aux->id_page);
+void printaLista(TLista *lista){
+	TCelula *aux = lista->frente->proximo;
+	while(aux!=lista->frente){
+		printf("%d\t", aux->item.id_page);
+        printf("%d\t", aux->item.hit);
+        printf("%f\n", aux->item.time);
 		aux=aux->proximo;
-	}while(aux!=pLista->primeiro);
+	}
 }
 
 int main(){    
-    int n, k, i, j;
-    scanf("%d", &n);
-    TLista *lista = TLista_Inicia();
-    TCelula auxinsere;
-    TCelula *auxretira;
+    TLista lista;
+    TLista_Inicia(&lista);
     
-    for(i=0;i<n;i++){
-        scanf("%d", &auxinsere.id_page);
-        TLista_Insere(lista, &auxinsere);
+    TItem aux;
+    TApontador *posicao;
+    posicao=lista.frente->proximo;
+    int i;
+    for(i=1;i<=3;i++){
+        aux.id_page=i*1000;
+        aux.hit=i*10;
+        aux.time=i*25.5;
+        TLista_Insere(&lista, posicao, aux);
     }
     
-	printaLista(lista);
+	printaLista(&lista);
 	/*
     while(lista->tamanho!=1){
         for(i=0;i<k;i++){
