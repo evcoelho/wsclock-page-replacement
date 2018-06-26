@@ -104,18 +104,6 @@ int main(){
     }
     
 	printaLista(&lista);
-	/*
-    while(lista->tamanho!=1){
-        for(i=0;i<k;i++){
-            if(lista->posicao->proximo==NULL){
-                lista->posicao=lista->primeiro;
-            }else
-                lista->posicao=lista->posicao->proximo;
-        }
-        auxretira=TLista_Retira(lista);
-        printf("%d\n", auxretira->id_page);
-    }
-    auxretira=TLista_Retira(lista);
-    printf("%d\n", auxretira->id_page);*/
+	
     return 0;
 }
