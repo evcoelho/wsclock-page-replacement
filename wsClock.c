@@ -132,23 +132,23 @@ void Rand(TItem *x, int clock){
     x->time=clock;
 }
 
-TApontador* subsPage(TLista *lista, long clk){ //PROBLEMA TA AQUI RAAPAZZ
+TApontador* subsPage(TLista *lista, long clk){
     TApontador *aux = lista->frente->proximo;
-    TApontador *max_time;// = lista->frente->proximo; //segmentation
+    TApontador *max_time;
     long t=0;
     while(aux!=lista->frente){
-        if(aux->item.hit==0){
-        	if((aux->item.time - clk) > TAU){
+    	if(aux->item.hit==1){
+    		aux->item.hit=0;
+    	}
+        else if(aux->item.hit==0){
+        	if((clk - aux->item.time) > TAU){
 	            return aux;
 	        }
 	        else if(aux->item.time > t){
-	        	t = aux->item.time;
+	        	t = clk - aux->item.time; //tava t = aux->item.time;
 	        	max_time=aux;
 	        }
 	    }
-        else{
-            aux->item.hit=0;
-        }
         aux=aux->proximo;
     }
     return max_time;
@@ -169,18 +169,21 @@ void wsClock(TLista *lista){
     TApontador *posicao=lista->frente->proximo;
     TApontador *aux;
     for(i=0; i<TEMPO; i++){
+    	clock++;
         Rand(&x, clock);
         aux=TLista_Busca(lista, x.id_page);
         if(aux==NULL){ //nao acha na lista
             if(TLista_Tamanho(lista)<MAX_RAM){ //espaco livre
-                TLista_Insere(lista, posicao, x);
-                printf("INSERIU: %d \t\tclock: %ld\n", x.id_page, clock);
+                if(TLista_Insere(lista, posicao, x)){
+                	printf("INSERIU: %d \t\tclock: %ld\n", x.id_page, clock);
+                }
+                else printf("ERRO_0\n");
             }
             else{ //nao tem espaco livre
                 TApontador *page_out;
                 TItem xx;
                 page_out=subsPage(lista, clock);
-                if(page_out==NULL){
+                if(page_out==NULL){ 
 
                 }
                 else{
@@ -188,19 +191,18 @@ void wsClock(TLista *lista){
                     	if(TLista_Insere(lista, posicao, x)){
                     		printf("RETIROU: %d E INSERIU: %d\n", xx.id_page, x.id_page);
                     	}
-                    	else printf("ERRO1\n");
+                    	else printf("ERRO_1\n");
                     }
-                    else printf("ERRO2\n");
+                    else printf("ERRO_2\n");
                 }
             }
             page_miss++;
         }
-        else{ //se achar
+        else{ //se achar na ram
             aux->item.hit=1;
             aux->item.time=clock;
             count_hit++;
         }
-        clock++;
         if(clock>=T_MEDICAO){
         	zeraTudoOsHit(lista);
         	clock=0;
