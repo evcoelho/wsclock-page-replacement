@@ -6,12 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_PAGINAS 500/10
-#define MAX_RAM 250/10
+#define div 1
 
-#define TEMPO 10000/10
-#define TAU 200/10
-#define T_MEDICAO TAU*4/10
+#define MAX_PAGINAS 500/div
+#define MAX_RAM 250/div
+
+#define TEMPO 1000/div
+#define TAU 300/div
+#define T_MEDICAO 200/div
 
 typedef struct Item{
     int id_page;
@@ -102,11 +104,9 @@ int TLista_Retira(TLista *lista, int n, TItem *x){
 
 int TLista_Retira(TLista *lista, TApontador *p, TItem *x){
     if(TLista_EhVazia(lista)){
-        printf("A lista nao possui elementos\n");
         return 0;
     }
     else{
-        p=p->anterior;
         p->anterior->proximo=p->proximo;
         p->proximo->anterior=p->anterior;
         *x=p->item;
@@ -116,7 +116,7 @@ int TLista_Retira(TLista *lista, TApontador *p, TItem *x){
     }
 }
 
-void printaLista(TLista *lista){
+void TLista_Printa(TLista *lista){
 	TApontador *aux = lista->frente->proximo;
 	while(aux!=lista->frente){
 		printf("id_page: %d\t", aux->item.id_page);
@@ -132,28 +132,6 @@ void Rand(TItem *x, int clock){
     x->time=clock;
 }
 
-TApontador* subsPage(TLista *lista, long clk){
-    TApontador *aux = lista->frente->proximo;
-    TApontador *max_time;
-    long t=0;
-    while(aux!=lista->frente){
-    	if(aux->item.hit==1){
-    		aux->item.hit=0;
-    	}
-        else if(aux->item.hit==0){
-        	if((clk - aux->item.time) > TAU){
-	            return aux;
-	        }
-	        else if(aux->item.time > t){
-	        	t = clk - aux->item.time; //tava t = aux->item.time;
-	        	max_time=aux;
-	        }
-	    }
-        aux=aux->proximo;
-    }
-    return max_time;
-}
-
 void zeraTudoOsHit(TLista *lista){
 	TApontador *aux = lista->frente->proximo;
     while(aux!=lista->frente){
@@ -162,8 +140,30 @@ void zeraTudoOsHit(TLista *lista){
     }
 }
 
+TApontador* subsPage(TLista *lista, long clk){
+    TApontador *aux = lista->frente->proximo;
+    TApontador *max_time;
+    long t=9999999;
+    while(aux!=lista->frente){
+    	if(aux->item.hit==1){
+    		aux->item.hit=0;
+    	}
+        else if(aux->item.hit==0){ //if page is unreferenced
+        	if((clk - aux->item.time) > TAU){ //chech if age is bigger than tau
+	            return aux;
+	        }
+	        else if(aux->item.time < t){ //find the oldest one, minimum aux.time
+	        	t = aux->item.time;
+	        	max_time = aux;
+	        }
+	    }
+        aux=aux->proximo;
+    }
+    return max_time;
+}
+
 void wsClock(TLista *lista){
-    int i, count_hit=0, page_miss=0;
+    int i, count_hit=0, page_miss=0, cont=1;
     long clock=0;
     TItem x;
     TApontador *posicao=lista->frente->proximo;
@@ -172,33 +172,29 @@ void wsClock(TLista *lista){
     	clock++;
         Rand(&x, clock);
         aux=TLista_Busca(lista, x.id_page);
-        if(aux==NULL){ //nao acha na lista
-            if(TLista_Tamanho(lista)<MAX_RAM){ //espaco livre
+        if(aux==NULL){ //if not in memory
+            if(TLista_Tamanho(lista)<MAX_RAM){ //check if there's free memory space
                 if(TLista_Insere(lista, posicao, x)){
-                	printf("INSERIU: %d \t\tclock: %ld\n", x.id_page, clock);
+                	printf("nº %d \t Inseriu_id: %d\tclock: %ld\n",cont, x.id_page, clock);
+                	cont++;
                 }
                 else printf("ERRO_0\n");
             }
-            else{ //nao tem espaco livre
+            else{ //if all pages are referenced, find the oldest one
                 TApontador *page_out;
                 TItem xx;
                 page_out=subsPage(lista, clock);
-                if(page_out==NULL){ 
-
+                if(TLista_Retira(lista, page_out, &xx)){
+                	if(TLista_Insere(lista, posicao, x)){
+                		printf("Retirou_id: %d e Inseriu_id: %d \tclock: %ld\n", xx.id_page, x.id_page, clock);
+                	}
+                	else printf("ERRO_1\n");
                 }
-                else{
-                    if(TLista_Retira(lista, page_out, &xx)){
-                    	if(TLista_Insere(lista, posicao, x)){
-                    		printf("RETIROU: %d E INSERIU: %d\n", xx.id_page, x.id_page);
-                    	}
-                    	else printf("ERRO_1\n");
-                    }
-                    else printf("ERRO_2\n");
-                }
+                else printf("ERRO_2\n");
             }
             page_miss++;
         }
-        else{ //se achar na ram
+        else{ //if page already exist in memory
             aux->item.hit=1;
             aux->item.time=clock;
             count_hit++;
@@ -206,7 +202,7 @@ void wsClock(TLista *lista){
         if(clock>=T_MEDICAO){
         	zeraTudoOsHit(lista);
         	clock=0;
-        	printf("\t\t\tZEROU CLOCK\n");
+        	printf("\t\t\t\t\tZEROU CLOCK\n");
         }
     }
     printf("count hit: %d\n", count_hit);
@@ -217,23 +213,6 @@ int main(){
     TLista lista;
     TLista_Inicia(&lista);
     wsClock(&lista);
-    /*
-    TItem aux;  //a insercao na lista eh atraves de um TItem
-    TApontador *posicao = lista.frente->proximo;  //sempre insere na primeira posicao, dps da cabeca
-    int i;
-    for(i=1;i<=5;i++){
-        aux.id_page=i*1000;
-        aux.hit=i*10;
-        aux.time=i*25.5;
-        TLista_Insere(&lista, posicao, aux);
-        printaLista(&lista);
-        printf("\n");
-    }
-    TItem x;  
-    TLista_Retira(&lista, 3, &x);
-    printf("%d\n", TLista_Busca(&lista, 3000));
-    printf("%d\n", TLista_Busca(&lista, 2000));
-    */
-    printaLista(&lista);
+    //TLista_Printa(&lista);
     return 0;
 }
